@@ -712,11 +712,13 @@ func createHTTPClient(timeout time.Duration) *http.Client {
 	}
 }
 
-// parseAPIResponseBody parses the response body into an APIResponse struct
-func parseAPIResponseBody(bodyBytes []byte) (*APIResponse, error) {
+// parseAPIResponseBody parses the response body into an APIResponse struct.
+// statusCode is the HTTP status of the response; it is only used to make the
+// error useful when the body is not JSON.
+func parseAPIResponseBody(bodyBytes []byte, statusCode int) (*APIResponse, error) {
 	var apiResp APIResponse
 	if err := json.Unmarshal(bodyBytes, &apiResp); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+		return nil, newNonJSONResponseError(statusCode, bodyBytes, err)
 	}
 	return &apiResp, nil
 }
@@ -845,7 +847,7 @@ func LoginWithCookie(client *Client, req LoginRequest) (*LoginResponse, string, 
 	}
 
 	// Parse the API response
-	apiResp, err := parseAPIResponseBody(bodyBytes)
+	apiResp, err := parseAPIResponseBody(bodyBytes, resp.StatusCode)
 	if err != nil {
 		return nil, "", err
 	}
@@ -919,7 +921,7 @@ func StartDeviceWebAuth(client *Client, req DeviceWebAuthStartRequest) (*DeviceW
 	}
 
 	// Parse the API response
-	apiResp, err := parseAPIResponseBody(bodyBytes)
+	apiResp, err := parseAPIResponseBody(bodyBytes, resp.StatusCode)
 	if err != nil {
 		return nil, err
 	}
@@ -977,7 +979,7 @@ func PollDeviceWebAuth(client *Client, code string) (*DeviceWebAuthPollResponse,
 	}
 
 	// Parse the API response
-	apiResp, err := parseAPIResponseBody(bodyBytes)
+	apiResp, err := parseAPIResponseBody(bodyBytes, resp.StatusCode)
 	if err != nil {
 		return nil, "", err
 	}
