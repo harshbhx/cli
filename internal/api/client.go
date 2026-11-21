@@ -152,7 +152,7 @@ func (c *Client) request(method, endpoint string, payload interface{}, result in
 	// Parse the API response structure
 	var apiResp APIResponse
 	if err := json.Unmarshal(bodyBytes, &apiResp); err != nil {
-		return fmt.Errorf("failed to unmarshal response: %w", err)
+		return newNonJSONResponseError(resp.StatusCode, bodyBytes, err)
 	}
 
 	// Check if the response indicates an error (based on error/success fields)
